@@ -85,7 +85,7 @@ def requestGetData():
     email_value = request.args.get('email')
 
     # Получение значения query-параметра "param2" (если он присутствует, иначе используется значение по умолчанию)
-    pass_value = request.args.get('pass')
+    pass_value = request.args.get('pass') 
 
     user = {
         "email": email_value,

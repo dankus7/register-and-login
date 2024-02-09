@@ -72,6 +72,22 @@ async function showRegisterStatus(response) {
   }
 }
 
+async function showLoginStatus(response) {
+  // Берём ответ сервера
+  const data = await response.json();
+  console.log('Response from server:', data);
+  // Выводим нужный результат в зависимости от ответа сервера
+  if (data == "True") {
+    console.log("Пользователь успешно вошел в систему.")
+    WhichWarningIsVisibleLogin.value = true
+  }
+  else if (data == "False") {
+    console.log("Ошибка, проверьте данные ввода.")
+    WhichWarningIsVisibleLogin.value = false
+  }
+}
+
+
 // Функция которая создаёт пользователя
 function createNewUser(name, email, pass) {
   let user = {
@@ -130,8 +146,8 @@ async function handleLoginClick() {
 
   if (existingUser.email == '' || existingUser.pass == '') {
     console.log("Одно или больше из полей пустое.")
-    nullInputsRegister.value = true
-    WhichWarningIsVisibleRegister.value = null
+    nullInputsLogin.value = true
+    WhichWarningIsVisibleLogin.value = null
   }
   else {
   const queryString = new URLSearchParams(existingUser).toString();
@@ -139,6 +155,8 @@ async function handleLoginClick() {
 
   let serverResponse = await sendGetRequest(urlWithParams)
   console.log(serverResponse)
+
+  await showLoginStatus(serverResponse)
   }
   // let data = await serverResponse.json()
   // console.log(data)
@@ -175,6 +193,17 @@ async function handleLoginClick() {
                           <input v-model="login_pass" type="password" name="logpass" class="form-style login_pass"
                             placeholder="Your Password" autocomplete="off">
                           <i class="input-icon uil uil-lock-alt"></i>
+                        </div>
+                        <div class="register-failed-style" v-if="nullInputsLogin">
+                          <p>Поля не должны быть пустыми.</p>
+                        </div>
+                        <div class="register-success-style" v-if="WhichWarningIsVisibleLogin == true"
+                          :style="register_success">
+                          <p>Вы вошли в систему.</p>
+                        </div>
+                        <div class="register-failed-style" v-else-if="WhichWarningIsVisibleLogin == false"
+                          :style="register_failed">
+                          <p>Ошибка, проверьте данные ввода.</p>
                         </div>
                         <a href="#" class="btn mt-4 login-submit" ref="login_submit" @click="handleLoginClick">submit</a>
                         <p class="mb-0 mt-4 text-center"><a href="#0" class="link">Forgot your password?</a></p>
