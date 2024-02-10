@@ -24,7 +24,7 @@ def jsonValueCheck():
 # Функция проверки одинаковых почт
 def checkEmail(existing_data, data):
     for user in existing_data:
-        if desired_key in user:
+        if "email" in user:
             if user["email"]==data["email"]: 
                 
                 return True
@@ -105,7 +105,7 @@ def index():
         response.headers['Content-Type'] = "application/json"
         return response
     elif request.method == 'GET':
-        response = make_response(jsonify(str(userLogin())))
+        response = make_response(jsonify(str(userLogin()))) 
 
         response.headers['Access-Control-Allow-Origin'] = '*' 
         response.headers['Content-Type'] = "application/json"
