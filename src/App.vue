@@ -18,6 +18,8 @@ let whichWarningIsVisibleLogin = ref(null)
 
 let serverUrl = 'http://127.0.0.1:5000'
 
+
+// изменения
 // Функция для отправки запроса
 // http://127.0.0.1:5000/?email=email@.com&pass=password123
 async function sendGetRequest(url: string) {
