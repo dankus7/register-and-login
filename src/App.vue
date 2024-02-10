@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-// Много-много переменных
+import { ref, Ref } from 'vue';
+// Элементы фронта
 let register_name = ref("")
 let register_email = ref("")
 let register_pass = ref("")
 let register_submit = ref("")
-let register_success = ref("")
-let register_failed = ref("")
 let login_email = ref("")
 let login_pass = ref("")
+
+// Отображение ошибок \ уведомлений
+let register_success = ref("")
+let register_failed = ref("")
 let nullInputsRegister = ref(false)
 let nullInputsLogin = ref(false)
-let WhichWarningIsVisibleRegister = ref(null)
-let WhichWarningIsVisibleLogin = ref(null)
+let whichWarningIsVisibleRegister = ref(null)
+let whichWarningIsVisibleLogin = ref(null)
 
 let serverUrl = 'http://127.0.0.1:5000'
 
 // Функция для отправки запроса
-async function sendGetRequest(url) {
+// http://127.0.0.1:5000/?email=email@.com&pass=password123
+async function sendGetRequest(url: string) {
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -34,7 +37,6 @@ async function sendGetRequest(url) {
     return response
   }
 }
-// http://127.0.0.1:5000/?email=email@.com&pass=password123
 
 async function sendPostRequest(user: object) {
   // Отправляем запрос
@@ -57,66 +59,56 @@ async function sendPostRequest(user: object) {
 }
 
 // Функция для показывания результата регистрации на страницу
-async function showRegisterStatus(response) {
+async function showStatus(response: any, successText: string, failText: string, notify: Ref,) {
   // Берём ответ сервера
   const data = await response.json();
   console.log('Response from server:', data);
   // Выводим нужный результат в зависимости от ответа сервера
   if (data == "True") {
-    console.log("Пользователь успешно зарегестрирован.")
-    WhichWarningIsVisibleRegister.value = true
+    console.log(successText)
+    notify.value = true
   }
   else if (data == "False") {
-    console.log("Данная почта уже зарегестрирована.")
-    WhichWarningIsVisibleRegister.value = false
+    console.log(failText)
+    notify.value = false
   }
 }
-
-async function showLoginStatus(response) {
-  // Берём ответ сервера
-  const data = await response.json();
-  console.log('Response from server:', data);
-  // Выводим нужный результат в зависимости от ответа сервера
-  if (data == "True") {
-    console.log("Пользователь успешно вошел в систему.")
-    WhichWarningIsVisibleLogin.value = true
-  }
-  else if (data == "False") {
-    console.log("Ошибка, проверьте данные ввода.")
-    WhichWarningIsVisibleLogin.value = false
-  }
-}
-
 
 // Функция которая создаёт пользователя
-function createNewUser(name, email, pass) {
-  let user = {
-    username: name,
-    email: email,
-    pass: pass,
+interface User{
+  username?: string
+  email?: string
+  pass?: string
+}
+function createNewUser(type: string) {
+  let user:User = {}
+  if (type == "POST") {
+    user = {
+      username: register_name.value,
+      email: register_email.value,
+      pass: register_pass.value,
+    }
+  }
+  else if (type=="GET") {
+    user = {
+      email: login_email.value,
+      pass: login_pass.value
+    }
   }
   return user
 }
 
-function userLogin(email: string, pass: string) {
-  let user = {
-    email: email,
-    pass: pass
-  }
-  return user
-}
-
-// Функция при клике
+// Функция при клике регистрации
 async function handleRegisterClick() {
   //  Создаём нового юзера
-  let newUser = createNewUser(register_name.value, register_email.value, register_pass.value)
+  let newUser = createNewUser("POST")
   console.log("input data:", newUser);
 
   // Проверка на пустые поля
   if (newUser.username == '' || newUser.email == '' || newUser.pass == '') {
     console.log("Одно или больше из полей пустое.")
     nullInputsRegister.value = true
-    WhichWarningIsVisibleRegister.value = null
+    whichWarningIsVisibleRegister.value = null
   }
 
   // Если все поля заполнены - идём дальше
@@ -129,7 +121,7 @@ async function handleRegisterClick() {
       let serverResponse = await sendPostRequest(newUser)
 
       // Работаем с ответом сервера
-      await showRegisterStatus(serverResponse)
+      await showStatus(serverResponse, "Регистрация прошла успешно.", "Данный пользователь уже зарегестрирован.", whichWarningIsVisibleRegister)
     }
 
     // Ошибка?
@@ -139,30 +131,27 @@ async function handleRegisterClick() {
   }
 };
 
+// Кнопка логина
 async function handleLoginClick() {
-  let existingUser = userLogin(login_email.value, login_pass.value)
-  console.log(existingUser)
+  let newUser = createNewUser("GET")
+  console.log(newUser)
 
-
-  if (existingUser.email == '' || existingUser.pass == '') {
+  if (newUser.email == '' || newUser.pass == '') {
     console.log("Одно или больше из полей пустое.")
     nullInputsLogin.value = true
-    WhichWarningIsVisibleLogin.value = null
+    whichWarningIsVisibleLogin.value = null
   }
   else {
-
     nullInputsRegister.value = false
-    
-  const queryString = new URLSearchParams(existingUser).toString();
-  const urlWithParams = `${serverUrl}?${queryString}`;
 
-  let serverResponse = await sendGetRequest(urlWithParams)
-  console.log(serverResponse)
+    const queryString = new URLSearchParams({...newUser}).toString();
+    const urlWithParams = `${serverUrl}?${queryString}`;
 
-  await showLoginStatus(serverResponse)
+    let serverResponse = await sendGetRequest(urlWithParams)
+    console.log(serverResponse)
+
+    await showStatus(serverResponse, "Вы вошли в систему", "Ошибка, проверьте данные ввода.", whichWarningIsVisibleLogin)
   }
-  // let data = await serverResponse.json()
-  // console.log(data)
 }
 
 </script>
@@ -200,11 +189,11 @@ async function handleLoginClick() {
                         <div class="register-failed-style" v-if="nullInputsLogin">
                           <p>Поля не должны быть пустыми.</p>
                         </div>
-                        <div class="register-success-style" v-if="WhichWarningIsVisibleLogin == true"
+                        <div class="register-success-style" v-if="whichWarningIsVisibleLogin == true"
                           :style="register_success">
                           <p>Вы вошли в систему.</p>
                         </div>
-                        <div class="register-failed-style" v-else-if="WhichWarningIsVisibleLogin == false"
+                        <div class="register-failed-style" v-else-if="whichWarningIsVisibleLogin == false"
                           :style="register_failed">
                           <p>Ошибка, проверьте данные ввода.</p>
                         </div>
@@ -237,11 +226,11 @@ async function handleLoginClick() {
                         <div class="register-failed-style" v-if="nullInputsRegister">
                           <p>Поля не должны быть пустыми.</p>
                         </div>
-                        <div class="register-success-style" v-if="WhichWarningIsVisibleRegister == true"
+                        <div class="register-success-style" v-if="whichWarningIsVisibleRegister == true"
                           :style="register_success">
                           <p>Регистрация пройдена успешно.</p>
                         </div>
-                        <div class="register-failed-style" v-else-if="WhichWarningIsVisibleRegister == false"
+                        <div class="register-failed-style" v-else-if="whichWarningIsVisibleRegister == false"
                           :style="register_failed">
                           <p>Данная почта уже зарегестрирована.</p>
                         </div>
