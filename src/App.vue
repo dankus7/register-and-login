@@ -150,6 +150,9 @@ async function handleLoginClick() {
     WhichWarningIsVisibleLogin.value = null
   }
   else {
+
+    nullInputsRegister.value = false
+    
   const queryString = new URLSearchParams(existingUser).toString();
   const urlWithParams = `${serverUrl}?${queryString}`;
 
